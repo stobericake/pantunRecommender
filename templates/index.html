@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pantun AI 2.0: Interactive Themes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;600&family=Playfair+Display:ital,wght@1,400;1,700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            /* Default */
+            --bg-gradient: radial-gradient(circle at center, #1b4d3e 0%, #051a14 100%);
+            --glass-bg: rgba(20, 40, 30, 0.4);
+            --accent-color: #d4af37;
+            --text-color: #ffffff;
+            --secondary-color: #0f2f24;
+        }
+
+        [data-theme="anger"] {
+            --bg-gradient: radial-gradient(circle at center, #7f1d1d 0%, #2a0a0a 100%);
+            --glass-bg: rgba(69, 10, 10, 0.5);
+            --accent-color: #fca5a5;
+            --text-color: #fef2f2;
+            --secondary-color: #450a0a;
+        }
+
+        [data-theme="joy"] {
+            --bg-gradient: radial-gradient(circle at center, #0ea5e9 0%, #0c4a6e 100%);
+            --glass-bg: rgba(255, 255, 255, 0.15);
+            --accent-color: #fde047;
+            --text-color: #ffffff;
+            --secondary-color: #075985;
+        }
+
+        [data-theme="sadness"] {
+            --bg-gradient: linear-gradient(to bottom, #334155 0%, #0f172a 100%);
+            --glass-bg: rgba(30, 41, 59, 0.6);
+            --accent-color: #94a3b8;
+            --text-color: #e2e8f0;
+            --secondary-color: #1e293b;
+        }
+
+        [data-theme="fear"] {
+            --bg-gradient: radial-gradient(circle at center, #4c1d95 0%, #000000 100%);
+            --glass-bg: rgba(20, 0, 40, 0.6);
+            --accent-color: #d8b4fe;
+            --text-color: #f3e8ff;
+            --secondary-color: #3b0764;
+        }
+    </style>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { 
+                        'theme-accent': 'var(--accent-color)',
+                        'theme-glass': 'var(--glass-bg)',
+                        'theme-secondary': 'var(--secondary-color)',
+                        'alert-red': '#ef4444',
+                        'warn-orange': '#f97316',
+                    },
+                    fontFamily: { 
+                        'header': ['Cinzel', 'serif'], 
+                        'pantun': ['Playfair Display', 'serif'],
+                        'ui': ['Inter', 'sans-serif'] 
+                    },
+                    animation: {
+                        'fade-in-up': 'fadeInUp 0.8s ease-out forwards',
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-glow': 'pulseGlow 2s infinite',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { 
+            background: var(--bg-gradient); 
+            color: var(--text-color);
+            transition: background 1s ease, color 0.5s ease;
+            overflow-x: hidden; 
+        }
+        
+        .glass-panel { 
+            background: var(--glass-bg); 
+            backdrop-filter: blur(16px); 
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+            border-top: 1px solid var(--accent-color);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5); 
+            transition: background 1s ease, border-color 1s ease;
+        }
+
+        .typing-cursor::after { content: '|'; animation: blink 1s step-end infinite; color: var(--accent-color); }
+        @keyframes blink { 50% { opacity: 0; } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        @keyframes pulseGlow { 0%, 100% { text-shadow: 0 0 10px rgba(255,255,255,0.2); } 50% { text-shadow: 0 0 30px var(--accent-color); } }
+        
+        /* --- DYNAMIC PARTICLE ANIMATIONS --- */
+        .particle { position: absolute; pointer-events: none; transition: all 1s ease; }
+        
+        /* 1. Firefly / Ghost (Float) */
+        @keyframes wander { 
+            0% { transform: translate(0, 0) scale(1); opacity: 0; } 
+            50% { opacity: 0.8; } 
+            100% { transform: translate(var(--move-x), var(--move-y)) scale(0); opacity: 0; } 
+        }
+
+        /* 2. Fire / Anger (Rise Fast) */
+        @keyframes rise {
+            0% { transform: translateY(100vh) scale(0.5); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translateY(-10vh) scale(1.5); opacity: 0; }
+        }
+
+        /* 3. Rain / Sadness (Fall Fast) */
+        @keyframes fall {
+            0% { transform: translateY(-10vh); opacity: 0; }
+            10% { opacity: 1; }
+            100% { transform: translateY(100vh); opacity: 0.5; }
+        }
+
+    </style>
+</head>
+<body data-theme="original">
+
+    <div id="particleContainer" class="fixed inset-0 pointer-events-none z-0"></div>
+
+    <button onclick="changeTheme()" class="fixed top-6 right-6 z-50 bg-black/40 border border-theme-accent text-theme-accent p-3 rounded-full hover:bg-white/10 transition-all shadow-lg group backdrop-blur-md">
+        <svg id="themeIcon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 group-hover:rotate-12 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+        </svg>
+        <span id="themeNameLabel" class="absolute right-full mr-3 top-2 bg-black/80 px-2 py-1 rounded text-xs text-white opacity-0 group-hover:opacity-100 transition whitespace-nowrap font-ui">
+            Original Theme
+        </span>
+    </button>
+
+    <div class="relative z-10 w-full max-w-7xl grid grid-cols-1 lg:grid-cols-12 gap-8 h-auto lg:h-[90vh] p-4">
+        
+        <section class="lg:col-span-5 glass-panel rounded-2xl p-8 flex flex-col justify-between animate-fade-in-up">
+            <div>
+                <header class="mb-6">
+                    <div class="flex items-center gap-2 text-theme-accent mb-2">
+                        <span class="font-ui text-[10px] font-bold tracking-[0.3em] uppercase">System 2.0: Online</span>
+                    </div>
+                    <h1 class="font-header text-4xl md:text-5xl font-bold text-white leading-tight">
+                        Hikayat <br><span class="text-transparent bg-clip-text bg-gradient-to-r from-theme-accent to-white transition-all">Pantun AI</span>
+                    </h1>
+                    <p class="font-ui text-white/60 mt-4 text-sm border-l-2 border-theme-accent pl-4">
+                        <strong>Features Active:</strong><br>
+                        • Adab Engine (Safety Filter)<br>
+                        • Mixed Emotion Detection<br>
+                        • Interactive Themes
+                    </p>
+                </header>
+
+                <div class="relative group mt-8">
+                    <label class="block font-ui text-xs font-bold text-theme-accent uppercase mb-2">Your Reflection</label>
+                    <textarea id="textInput" 
+                        class="w-full h-48 bg-black/20 border border-white/10 rounded-lg p-5 text-lg font-pantun text-white placeholder-white/30 focus:outline-none focus:border-theme-accent transition resize-none"
+                        placeholder="Write how you feel... (e.g. 'I am feeling happy but also a bit sad')"></textarea>
+                </div>
+            </div>
+
+            <button onclick="analyzeText()" 
+                class="mt-6 w-full bg-theme-accent text-theme-secondary font-ui font-bold py-4 rounded-lg hover:shadow-[0_0_20px_rgba(255,255,255,0.4)] transition transform duration-300">
+                GENERATE VERSE
+            </button>
+        </section>
+
+        <section class="lg:col-span-7 relative h-full min-h-[500px]">
+            
+            <div id="stateIdle" class="absolute inset-0 glass-panel rounded-2xl flex flex-col items-center justify-center text-center p-10 animate-float">
+                <h3 class="font-header text-2xl text-white mb-2">Awaiting Input</h3>
+                <p class="font-ui text-white/40 text-sm">The AI is ready to interpret your story.</p>
+            </div>
+
+            <div id="stateResult" class="hidden absolute inset-0 glass-panel rounded-2xl p-8 md:p-10 flex flex-col justify-between z-30">
+                
+                <div class="absolute top-6 right-6 flex gap-3 z-40">
+                    <button onclick="resetApp()" class="text-white/30 hover:text-white transition text-sm uppercase tracking-widest font-bold">Reset</button>
+                </div>
+
+                <div id="alertsContainer" class="w-full mb-4 hidden">
+                    <div id="adabAlert" class="hidden w-full bg-alert-red/20 border border-alert-red/50 p-3 rounded text-alert-red font-ui text-xs font-bold uppercase tracking-widest text-center">
+                        ⚠️ Adab Violation Detected
+                    </div>
+                    <div id="inputAlert" class="hidden w-full bg-warn-orange/20 border border-warn-orange/50 p-3 rounded text-warn-orange font-ui text-xs font-bold uppercase tracking-widest text-center">
+                        ⚠️ Emotion Required Only
+                    </div>
+                </div>
+
+                <div id="emotionDisplay" class="text-center mt-2 mb-6">
+                    <h4 class="font-ui text-xs font-bold text-theme-accent uppercase tracking-[0.4em] mb-2">Detected Emotion</h4>
+                    
+                    <h1 id="emotionLabel" class="font-header text-4xl md:text-6xl font-bold text-white animate-pulse-glow leading-tight transition-all">
+                        --
+                    </h1>
+                    
+                    <div id="mixedBadge" class="hidden mt-2 inline-block">
+                        <span class="font-ui text-[10px] font-bold text-blue-300 uppercase tracking-[0.2em] border border-blue-300/30 bg-blue-900/30 px-3 py-1 rounded-full">
+                            Complex/Mixed Feelings
+                        </span>
+                    </div>
+                </div>
+
+                <div id="pantunContainer" class="flex-grow flex items-center justify-center">
+                    <div class="w-full">
+                        <h2 id="pantunTitle" class="font-header text-2xl md:text-3xl text-theme-accent mb-4 text-center transition-colors">--</h2>
+                        <blockquote class="font-pantun text-xl md:text-2xl text-white/90 leading-loose italic border-l-2 border-white/10 pl-6 whitespace-pre-line">
+                            <span id="typewriterTarget" class="typing-cursor"></span>
+                        </blockquote>
+                    </div>
+                </div>
+
+                <div id="bottomSection" class="mt-4">
+                    <div class="bg-black/30 p-4 rounded-lg border border-theme-accent/20 animate-fade-in-up mb-4">
+                        <h4 class="font-ui text-xs font-bold text-theme-accent uppercase mb-1">Tafsir (Meaning)</h4>
+                        <p id="pantunMeaning" class="font-ui text-sm text-white/70 leading-relaxed">--</p>
+                    </div>
+
+                    <div id="learningControls" class="flex gap-4">
+                        <button onclick="sendFeedback(event)" 
+                            class="flex-1 bg-green-500/20 hover:bg-green-500 hover:text-white text-green-400 border border-green-500/30 font-ui font-bold py-3 rounded-lg transition duration-300">
+                            👍 Suka (Teach AI)
+                        </button>
+                        <button onclick="nextPantun()" 
+                            class="flex-1 bg-white/10 hover:bg-theme-accent hover:text-theme-secondary text-white border border-white/20 font-ui font-bold py-3 rounded-lg transition duration-300">
+                            Next Pantun →
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // --- 1. THEME LOGIC WITH VISUAL ELEMENTS ---
+        const themeConfig = {
+            'original': { name: "Original", element: "firefly", count: 20 },
+            'anger':    { name: "Anger Mode", element: "🔥", count: 15 },
+            'joy':      { name: "Joy Mode", element: "🎈", count: 15 },
+            'sadness':  { name: "Sad Mode", element: "💧", count: 40 },
+            'fear':     { name: "Fear Mode", element: "👻", count: 10 }
+        };
+        const themes = Object.keys(themeConfig);
+        let currentThemeIndex = 0;
+
+        function changeTheme() {
+            currentThemeIndex++;
+            if (currentThemeIndex >= themes.length) currentThemeIndex = 0;
+            
+            const newTheme = themes[currentThemeIndex];
+            const config = themeConfig[newTheme];
+
+            // Update Body Theme
+            document.body.setAttribute('data-theme', newTheme);
+            document.getElementById('themeNameLabel').textContent = config.name;
+
+            // RESTART PARTICLES based on theme
+            initParticles(newTheme);
+        }
+
+        // --- 2. DYNAMIC PARTICLE SYSTEM ---
+        function initParticles(theme) {
+            const container = document.getElementById('particleContainer');
+            container.innerHTML = ''; // Clear old particles
+            
+            const config = themeConfig[theme];
+            
+            for (let i = 0; i < config.count; i++) {
+                const p = document.createElement('div');
+                p.classList.add('particle');
+                
+                // Random positioning
+                const startX = Math.random() * 100;
+                const delay = Math.random() * 5;
+                const duration = Math.random() * 5 + 5;
+
+                // 1. ORIGINAL (Fireflies - Divs)
+                if (theme === 'original') {
+                    p.style.width = '3px';
+                    p.style.height = '3px';
+                    p.style.background = '#d4af37';
+                    p.style.borderRadius = '50%';
+                    p.style.boxShadow = '0 0 8px #d4af37';
+                    p.style.left = startX + 'vw';
+                    p.style.top = Math.random() * 100 + 'vh';
+                    // Wandering animation
+                    p.style.setProperty('--move-x', (Math.random() * 20 - 10) + 'vw');
+                    p.style.setProperty('--move-y', (Math.random() * 20 - 10) + 'vh');
+                    p.style.animation = `wander ${duration}s linear infinite`;
+                } 
+                // 2. ANGER (Fire - Rising)
+                else if (theme === 'anger') {
+                    p.textContent = config.element;
+                    p.style.fontSize = (Math.random() * 20 + 10) + 'px';
+                    p.style.left = startX + 'vw';
+                    p.style.animation = `rise ${duration * 0.5}s ease-in infinite`;
+                }
+                // 3. JOY (Balloons - Floating)
+                else if (theme === 'joy') {
+                    p.textContent = ['🎈', '✨', '🎉'][Math.floor(Math.random()*3)];
+                    p.style.fontSize = (Math.random() * 20 + 15) + 'px';
+                    p.style.left = startX + 'vw';
+                    p.style.top = '110vh';
+                    p.style.animation = `rise ${duration}s linear infinite`;
+                }
+                // 4. SADNESS (Rain - Falling)
+                else if (theme === 'sadness') {
+                    p.textContent = '💧';
+                    p.style.fontSize = '12px';
+                    p.style.left = startX + 'vw';
+                    p.style.animation = `fall ${Math.random() * 1 + 0.5}s linear infinite`;
+                }
+                // 5. FEAR (Ghosts - Spooky)
+                else if (theme === 'fear') {
+                    p.textContent = ['👻', '🕸️'][Math.floor(Math.random()*2)];
+                    p.style.fontSize = (Math.random() * 25 + 10) + 'px';
+                    p.style.left = startX + 'vw';
+                    p.style.top = Math.random() * 100 + 'vh';
+                    p.style.opacity = 0;
+                    p.style.setProperty('--move-x', (Math.random() * 50 - 25) + 'vw');
+                    p.style.setProperty('--move-y', (Math.random() * 20 - 10) + 'vh');
+                    p.style.animation = `wander ${duration * 1.5}s ease-in-out infinite`;
+                }
+
+                p.style.animationDelay = delay + 's';
+                container.appendChild(p);
+            }
+        }
+
+        // Initialize default
+        initParticles('original');
+
+        // --- 3. EXISTING LOGIC ---
+        const states = { IDLE: document.getElementById('stateIdle'), RESULT: document.getElementById('stateResult') };
+        let pantunList = []; 
+        let currentIndex = 0; 
+        let currentEmotion = ""; 
+
+        async function analyzeText() {
+            const text = document.getElementById('textInput').value;
+            if(!text) return alert("Please enter text.");
+
+            const response = await fetch('/analyze', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: text })
+            });
+
+            const data = await response.json();
+            states.IDLE.classList.add('hidden');
+            states.RESULT.classList.remove('hidden');
+
+            const alerts = document.getElementById('alertsContainer');
+            
+            alerts.classList.add('hidden');
+            document.getElementById('adabAlert').classList.add('hidden');
+            document.getElementById('inputAlert').classList.add('hidden');
+            document.getElementById('emotionDisplay').classList.remove('hidden');
+            document.getElementById('pantunContainer').classList.remove('hidden');
+            document.getElementById('bottomSection').classList.remove('hidden');
+
+            if (data.status === 'no_emotion') {
+                alerts.classList.remove('hidden');
+                document.getElementById('inputAlert').classList.remove('hidden');
+                document.getElementById('emotionDisplay').classList.add('hidden');
+                document.getElementById('pantunContainer').classList.add('hidden');
+                document.getElementById('bottomSection').classList.add('hidden');
+                return;
+            }
+
+            if (data.status === 'violation') {
+                alerts.classList.remove('hidden');
+                document.getElementById('adabAlert').classList.remove('hidden');
+                document.getElementById('learningControls').classList.add('hidden'); 
+                document.getElementById('mixedBadge').classList.add('hidden');
+            } else {
+                document.getElementById('learningControls').classList.remove('hidden');
+                const mixedBadge = document.getElementById('mixedBadge');
+                if (data.is_mixed) mixedBadge.classList.remove('hidden');
+                else mixedBadge.classList.add('hidden');
+            }
+
+            pantunList = data.results;
+            currentEmotion = data.emotion;
+            currentIndex = 0; 
+            displayPantun(currentIndex);
+            document.getElementById('emotionLabel').textContent = data.emotion.toUpperCase();
+        }
+
+        function displayPantun(index) {
+            if (index >= pantunList.length) { index = 0; currentIndex = 0; }
+            const item = pantunList[index];
+            document.getElementById('pantunTitle').textContent = item.title;
+            document.getElementById('pantunMeaning').textContent = item.meaning;
+            const target = document.getElementById('typewriterTarget');
+            const newTarget = target.cloneNode(true);
+            target.parentNode.replaceChild(newTarget, target);
+            typeWriter(item.body, newTarget);
+        }
+
+        function nextPantun() {
+            currentIndex++;
+            displayPantun(currentIndex);
+        }
+
+        async function sendFeedback(event) {
+            const item = pantunList[currentIndex];
+            const btn = event.target;
+            const response = await fetch('/feedback', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: item.id, emotion: 'any' }) 
+            });
+            if(response.ok) {
+                const originalText = btn.textContent;
+                btn.textContent = "Saved";
+                btn.classList.add("bg-green-600", "text-white");
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.classList.remove("bg-green-600", "text-white");
+                }, 2000);
+            }
+        }
+
+        function resetApp() {
+            document.getElementById('textInput').value = '';
+            states.RESULT.classList.add('hidden');
+            states.IDLE.classList.remove('hidden');
+        }
+
+        function typeWriter(txt, el) {
+            el.textContent = "";
+            let i = 0;
+            el.classList.add('typing-cursor');
+            function type() {
+                if(i < txt.length) {
+                    el.textContent += txt.charAt(i);
+                    i++;
+                    setTimeout(type, 25);
+                } else {
+                    el.classList.remove('typing-cursor');
+                }
+            }
+            type();
+        }
+    </script>
+</body>
+</html>
